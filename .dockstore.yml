@@ -1,6 +1,17 @@
 version: 1.2
 workflows:
    - subclass: WDL
-     primaryDescriptorPath: goleft_functions.wdl
+     primaryDescriptorPath: covstats_and_indexcov.wdl
      testParameterFiles:
-         - goleft_terra.json
+         - covstats_and_indexcov.json
+     name: covstats_and_indexcov
+#   - subclass: WDL
+#     primaryDescriptorPath: covstats.wdl
+#     testParameterFiles:
+#         - covstats.json
+#     name: covstats
+#   - subclass: WDL
+#     primaryDescriptorPath: indexcov.wdl
+#     testParameterFiles:
+#         - indexcov.json
+#     name: indexcov
