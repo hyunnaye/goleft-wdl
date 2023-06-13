@@ -1,4 +1,5 @@
 # goleft-wdl
+**Version 0.0.1 of goleft-wdl has since been replaced by multiple workflows. Please see other releases in this repo.**
 Collection of miscellanous WDLized [goleft](https://github.com/brentp/goleft) functions. Included are the covstats and indexcov functions.
 
 The result of covstats is a text file, reports.txt, that prints the filename, read length, and coverage of every input file, then the average coverage and read length for the entire array of inputs. However, all covstats entries are also reported as this.txt in each shard's working directory, which can assist in gaining more statistics or debugging.
