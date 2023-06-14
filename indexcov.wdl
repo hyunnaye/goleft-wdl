@@ -1,5 +1,5 @@
 version 1.0
 
-import "./goleft_functions.wdl"
+import "https://raw.githubusercontent.com/aofarrel/goleft-wdl/main/goleft_functions.wdl" as goleft
 
 workflow indexcov {}

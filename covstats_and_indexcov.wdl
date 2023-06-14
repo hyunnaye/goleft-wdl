@@ -1,6 +1,6 @@
 version 1.0
 
-import "https://raw.githubusercontent.com/aofarrel/goleft-wdl/revamp/goleft_functions.wdl" as functions
+import "https://raw.githubusercontent.com/aofarrel/goleft-wdl/revamp/goleft_functions.wdl" as goleft
 
 workflow covstats_and_indexcov {
 
@@ -15,14 +15,14 @@ workflow covstats_and_indexcov {
 		Array[File] inputBamsOrCrams
 		Array[File]? inputIndexes
 		File? refGenome
-		File? refGenomeIndex # currently unused
+		File? refGenomeIndex
 	}
 
 	Array[String] emptyArray = []
 
 	if(defined(refGenome)) {
         if(!defined(refGenomeIndex)) {
-            call functions.indexRefGenome as indexRefGenome { input: refGenome = refGenome }
+            call goleft.indexRefGenome as indexRefGenome { input: refGenome = refGenome }
         }
 	}
     File fai = select_first([refGenomeIndex, indexRefGenome.refIndex])
@@ -48,7 +48,7 @@ workflow covstats_and_indexcov {
 			if (thisFilename == thisFilenameMinusCram) {
                 # After performing a sub() to remove the .cram extension, the basename is unchanged,
                 # so this must be a bam file.
-				call functions.indexcovBAM as indexcovBAM {
+				call goleft.indexcovBAM as indexcovBAM {
 					input:
 						inputBam = oneBamOrCram,
 						allInputIndexes = indexesOrLackThereof
@@ -58,7 +58,7 @@ workflow covstats_and_indexcov {
 			if (thisFilename != thisFilenameMinusCram) {
                 # After performing a sub() to remove the .cram extension, the basename is changed,
                 # so this must be a cram file.
-				call functions.indexcovCRAM as indexcovCRAM {
+				call goleft.indexcovCRAM as indexcovCRAM {
 					input:
 						inputCram = oneBamOrCram,
 						allInputIndexes = indexesOrLackThereof,
@@ -67,7 +67,7 @@ workflow covstats_and_indexcov {
 			}
 		}
 
-		call functions.covstats as covstats {
+		call goleft.covstats as covstats {
 			input:
 				inputBamOrCram = oneBamOrCram,
 				refGenome = refGenome,
@@ -75,7 +75,7 @@ workflow covstats_and_indexcov {
 		}
 	}
 
-	call functions.report as report {
+	call goleft.report as report {
 		input:
 			readLengths = covstats.outReadLength,
 			coverages = covstats.outCoverage,
