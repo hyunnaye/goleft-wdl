@@ -1,7 +1,7 @@
 version: 1.2
 workflows:
    - subclass: WDL
-     primaryDescriptorPath: ./covstats_and_indexcov.wdl
+     primaryDescriptorPath: /covstats_and_indexcov.wdl
      testParameterFiles:
-         - ./covstats_and_indexcov.json
+         - /covstats_and_indexcov.json
      name: covstats_and_indexcov
