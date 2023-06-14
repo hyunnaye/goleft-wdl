@@ -1,6 +1,6 @@
 version 1.0
 
-import "https://raw.githubusercontent.com/aofarrel/goleft-wdl/main/goleft_functions.wdl" as goleft
+import "https://raw.githubusercontent.com/aofarrel/goleft-wdl/revamp/covstats_and_indexcov.wdl" as goleft
 import "https://raw.githubusercontent.com/aofarrel/checker-WDL-templates/v0.9.3/tasks/filecheck_task.wdl" as checker_file
 import "https://raw.githubusercontent.com/aofarrel/checker-WDL-templates/v0.9.3/tasks/arraycheck_task.wdl" as checker_array
 
@@ -25,7 +25,7 @@ workflow goleft_checker {
 	}
 
 	# Run the workflow to be checked
-	call goleft.goleft_functions {
+	call goleft.covstats_and_indexcov {
 		input:
 			forceIndexcov = forceIndexcov,
 			inputBamsOrCrams = inputBamsOrCrams,
@@ -34,8 +34,8 @@ workflow goleft_checker {
 	}
 
 	# Check indexcov of bams
-	if (defined(goleft_functions.indexcov_of_bams)) {
-		scatter (an_output_array in goleft_functions.indexcov_of_bams) {
+	if (defined(covstats_and_indexcov.indexcov_of_bams)) {
+		scatter (an_output_array in covstats_and_indexcov.indexcov_of_bams) {
 			call checker_array.arraycheck_optional as check_indexcov_bams {
 				input:
 					test = an_output_array,
@@ -45,8 +45,8 @@ workflow goleft_checker {
 	}
 
 	# Check indexcov of crams
-	if (defined(goleft_functions.indexcov_of_crams)) {
-		scatter (an_output_array in goleft_functions.indexcov_of_crams) {
+	if (defined(covstats_and_indexcov.indexcov_of_crams)) {
+		scatter (an_output_array in covstats_and_indexcov.indexcov_of_crams) {
 			call checker_array.arraycheck_optional as check_indexcov_crams {
 				input:
 					test = an_output_array,
@@ -58,7 +58,7 @@ workflow goleft_checker {
 	# Check covstats (same task is used for both crams and bams)
 	call checker_file.filecheck as check_covstats {
 		input:
-			test = goleft_functions.covstats_report,
+			test = covstats_and_indexcov.covstats_report,
 			truth = truth_report
 	}
 

@@ -1,6 +1,6 @@
 version 1.0
 
-import "./goleft_functions.wdl" as functions
+import "https://raw.githubusercontent.com/aofarrel/goleft-wdl/revamp/goleft_functions.wdl" as functions
 
 workflow covstats_and_indexcov {
 
@@ -21,37 +21,48 @@ workflow covstats_and_indexcov {
 	Array[String] emptyArray = []
 
 	if(defined(refGenome)) {
-		call functions.indexRefGenome as indexRefGenome { input: refGenome = refGenome }
+        if(!defined(refGenomeIndex)) {
+            call functions.indexRefGenome as indexRefGenome { input: refGenome = refGenome }
+        }
 	}
+    File fai = select_first([refGenomeIndex, indexRefGenome.refIndex])
 
 	scatter(oneBamOrCram in inputBamsOrCrams) {
 
-		Array[String] allOrNoIndexes = select_first([inputIndexes, emptyArray])
+        # Every instance of indexcov gets *all* indexes that the user passes in for the following reasons:
+        # * Allows the user to input only some indexes
+        # * Allow us to only have to compute indexes that are missing (computing indexes can be expensive + slow)
+        # * We don't have to attempt to match bams/crams with their indexes using limited WDL built-ins, instead
+        #   we can do that in bash (conveniently also where we can index the bam/cram if the index is missing)
+        # * Indexes are small, so localizing a bunch of them isn't a terrible tradeoff
+		Array[String] indexesOrLackThereof = select_first([inputIndexes, emptyArray])
 
-		if (forceIndexcov || length(allOrNoIndexes) == length(inputBamsOrCrams)) {
+		if (forceIndexcov || length(indexesOrLackThereof) == length(inputBamsOrCrams)) {
+            # This block executes if either:
+            #   * forceIndexCov is true
+			#   * we have one index file per input bam/cram input
 
 			String thisFilename = "${basename(oneBamOrCram)}"
-			String longerIfACram = sub(thisFilename, "\\.cram", "foobarbizbuzz")
+			String thisFilenameMinusCram = sub(thisFilename, "\\.cram", "") # TODO: does \\ get interpreted as backslash or as extension?
 			
-			if (thisFilename == longerIfACram) {
-				# This rings true in the following situations:
-				# * This is a bam, and forceIndexCov is true
-				# * This is a bam, and we have one index file per input bam/cram input
-				# We are hoping that the second case means that the bam has an index file
-				# and we won't have to index it ourselves, but this isn't certain
+			if (thisFilename == thisFilenameMinusCram) {
+                # After performing a sub() to remove the .cram extension, the basename is unchanged,
+                # so this must be a bam file.
 				call functions.indexcovBAM as indexcovBAM {
 					input:
 						inputBam = oneBamOrCram,
-						allInputIndexes = allOrNoIndexes
+						allInputIndexes = indexesOrLackThereof
 				}
 			}
 
-			if (thisFilename != longerIfACram) {
+			if (thisFilename != thisFilenameMinusCram) {
+                # After performing a sub() to remove the .cram extension, the basename is changed,
+                # so this must be a cram file.
 				call functions.indexcovCRAM as indexcovCRAM {
 					input:
 						inputCram = oneBamOrCram,
-						allInputIndexes = allOrNoIndexes,
-						refGenomeIndex = indexRefGenome.refIndex
+						allInputIndexes = indexesOrLackThereof,
+						refGenomeIndex = fai
 				}
 			}
 		}
@@ -60,7 +71,7 @@ workflow covstats_and_indexcov {
 			input:
 				inputBamOrCram = oneBamOrCram,
 				refGenome = refGenome,
-				allInputIndexes = allOrNoIndexes
+				allInputIndexes = indexesOrLackThereof
 		}
 	}
 

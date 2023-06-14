@@ -43,6 +43,8 @@ task indexcovCRAM {
 		Array[File] allInputIndexes
 		File? refGenomeIndex
 
+		String sexChrNames = 'X, Y'
+
 		# runtime attributes
 		Int indexcovMemory = 4
 		Int indexcovPrempt = 1
@@ -88,7 +90,7 @@ task indexcovCRAM {
 			ln -s ~{inputCram} ~{prefix}_indexDir~{cramBasename}
 			ln -s ${INPUTCRAI} ~{prefix}_indexDir~{cramBasename}.crai
 			
-			goleft indexcov --extranormalize -d ~{prefix}_indexDir/ --fai ~{refGenomeIndex} ~{inputCram}.crai
+			goleft indexcov --sex ~{sexChrNames} --extranormalize -d ~{prefix}_indexDir/ --fai ~{refGenomeIndex} ~{inputCram}.crai
 
 		elif [ -f ${FILE_BASE}.bam ]; then
 			>&2 echo "Somehow a bam file got into the cram function!"
@@ -120,6 +122,8 @@ task indexcovBAM {
 	input {
 		File inputBam
 		Array[File] allInputIndexes
+
+		String sexChrNames = 'X, Y'
 
 		# runtime attributes
 		Int indexcovMemory = 4
@@ -166,7 +170,7 @@ task indexcovBAM {
 			mkdir ~{prefix}_indexDir
 			ln -s ~{inputBam} ~{prefix}_indexDir~{bamBasename}
 			ln -s ${INPUTBAI} ~{prefix}_indexDir~{bamBasename}.bai
-			goleft indexcov --directory ~{prefix}_indexDir/ *.bam
+			goleft indexcov --sex ~{sexChrNames} --directory ~{prefix}_indexDir/ *.bam
 
 		elif [ -f ${FILE_BASE}.cram ]; then
 			>&2 echo "Cram file detected in the bam task!"
