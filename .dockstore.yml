@@ -5,13 +5,3 @@ workflows:
      testParameterFiles:
          - ./covstats_and_indexcov.json
      name: covstats_and_indexcov
-#   - subclass: WDL
-#     primaryDescriptorPath: ./covstats.wdl
-#     testParameterFiles:
-#         - ./covstats.json
-#     name: covstats
-#   - subclass: WDL
-#     primaryDescriptorPath: ./indexcov.wdl
-#     testParameterFiles:
-#         - ./indexcov.json
-#     name: indexcov
