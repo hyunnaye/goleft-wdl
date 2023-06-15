@@ -44,7 +44,7 @@ task indexcovCRAM {
 		File? refGenomeIndex
 
 		String sexChrNames = 'X, Y'
-		String excludePattern = "^chrEBV$|^NC|_random$|Un_|^HLA\-|_alt$|hap\d$"
+		String excludePattern = "^chrEBV$|^NC|_random$|Un_|^HLA\\-|_alt$|hap\\d$"
 
 		# runtime attributes
 		Int indexcovMemory = 4
@@ -70,11 +70,11 @@ task indexcovCRAM {
 		FILE_BASE=$(echo ~{inputCram} | sed 's/\.[^.]*$//')
 		if [ "$FILE_EXT" = "cram" ] || [ "$FILE_EXT" = "CRAM" ]; then
 			# Check if an index file for the cram input exists
-			if [ -f ~{inputCram}.crai ]; then
+			if [ -f "~{inputCram}.crai" ]; then
 				echo "Crai file already exists with pattern *.cram.crai"
-			elif [ -f ${FILE_BASE}.crai ]; then
+			elif [ -f "${FILE_BASE}.crai" ]; then
 				echo "Crai file already exists with pattern *.crai"
-				mv ${FILE_BASE}.crai ${FILE_BASE}.cram.crai  # Rename with .cram.crai pattern
+				mv "${FILE_BASE}.crai" "${FILE_BASE}.cram.crai"  # Rename with .cram.crai pattern
 			else
 				echo "Input crai file not found. We searched for:"
 				echo "--------------------"
@@ -88,10 +88,10 @@ task indexcovCRAM {
 
 			INPUTCRAI=$(echo ~{inputCram}.crai)
 			mkdir ~{prefix}_indexDir
-			ln -s ~{inputCram} ~{prefix}_indexDir~{cramBasename}
-			ln -s ${INPUTCRAI} ~{prefix}_indexDir~{cramBasename}.crai
+			ln -s "~{inputCram}" "~{prefix}_indexDir~{cramBasename}"
+			ln -s "${INPUTCRAI}" "~{prefix}_indexDir~{cramBasename}.crai"
 			
-			goleft indexcov --sex '~{sexChrNames}' --excludepatt ~{excludePattern} --extranormalize -d ~{prefix}_indexDir/ --fai ~{refGenomeIndex} ~{inputCram}.crai
+			goleft indexcov --sex '~{sexChrNames}' --excludepatt "~{excludePattern}" --extranormalize -d ~{prefix}_indexDir/ --fai ~{refGenomeIndex} ~{inputCram}.crai
 
 		elif [ -f ${FILE_BASE}.bam ]; then
 			>&2 echo "Somehow a bam file got into the cram function!"
@@ -125,7 +125,7 @@ task indexcovBAM {
 		Array[File] allInputIndexes
 
 		String sexChrNames = 'X, Y'
-		String excludePattern = "^chrEBV$|^NC|_random$|Un_|^HLA\-|_alt$|hap\d$"
+		String excludePattern = "^chrEBV$|^NC|_random$|Un_|^HLA\\-|_alt$|hap\\d$"
 
 		# runtime attributes
 		Int indexcovMemory = 4
@@ -152,7 +152,7 @@ task indexcovBAM {
 		FILE_EXT=$(echo ~{inputBam} | sed 's/.*\.//')
 		FILE_BASE=$(echo ~{inputBam} | sed 's/\.[^.]*$//')
 		if [ "$FILE_EXT" = "bam" ] || [ "$FILE_EXT" = "BAM" ]; then
-			if [ -f ~{inputBam}.bai ]; then
+			if [ -f "~{inputBam}.bai" ]; then
 				echo "Bai file already exists with pattern *.bam.bai"
 			elif [ -f ${FILE_BASE}.bai ]; then
 				echo "Bai file already exists with pattern *.bai"
@@ -172,7 +172,7 @@ task indexcovBAM {
 			mkdir ~{prefix}_indexDir
 			ln -s ~{inputBam} ~{prefix}_indexDir~{bamBasename}
 			ln -s ${INPUTBAI} ~{prefix}_indexDir~{bamBasename}.bai
-			goleft indexcov --sex '~{sexChrNames}' --excludepatt ~{excludePattern} --directory ~{prefix}_indexDir/ *.bam
+			goleft indexcov --sex '~{sexChrNames}' --excludepatt "~{excludePattern}" --directory ~{prefix}_indexDir/ *.bam
 
 		elif [ -f ${FILE_BASE}.cram ]; then
 			>&2 echo "Cram file detected in the bam task!"
@@ -247,15 +247,15 @@ task covstats {
 		# Detect if inputBamOrCram is a bam or a cram file
 		FILE_BASE=$(echo ~{inputBamOrCram} | sed 's/\.[^.]*$//')
 
-		if [ -f ${FILE_BASE}.cram ]; then
+		if [ -f "${FILE_BASE}.cram" ]; then
 			echo "Cram file detected"
 
 			# We have a cram, now check if reference genome exists
 			if [ "~{refGenome}" != '' ]; then
 
-				goleft covstats -f ~{refGenome} ~{inputBamOrCram} >> this.txt
+				goleft covstats -f ~{refGenome} ~{inputBamOrCram} >> covstatsOut.txt
 
-				COVOUT=$(tail -n +2 this.txt)
+				COVOUT=$(tail -n +2 covstatsOut.txt)
 				read -a COVARRAY <<< "$COVOUT"
 				echo ${COVARRAY[0]} > thisCoverage
 				echo ${COVARRAY[11]} > thisReadLength
@@ -273,26 +273,26 @@ task covstats {
 
 			# We now know it's a bam file and must search for an index file
 			# or make one ourselves with samtools
-			OTHERPOSSIBILITY=$(echo ~{inputBamOrCram} | sed 's/\.[^.]*$//')
+			inputBamOrCramNoExtension=$(echo ~{inputBamOrCram} | sed 's/\.[^.]*$//')
 
-			if [ -f ~{inputBamOrCram}.bai ]; then
+			if [ -f "~{inputBamOrCram}.bai" ]; then
 				echo "Bai file already exists with pattern *.bam.bai"
-			elif [ -f ${OTHERPOSSIBILITY}.bai ]; then
+			elif [ -f "${inputBamOrCramNoExtension}.bai" ]; then
 				echo "Bai file already exists with pattern *.bai"
 			else
-				echo "Input bai file not found. We searched for:"
+				echo "Bam index not found. We searched for:"
 				echo "--------------------"
 				echo "  ~{inputBamOrCram}.bai"
 				echo "--------------------"
-				echo "  ${OTHERPOSSIBILITY}.bai"
+				echo "  ${inputBamOrCramNoExtension}.bai"
 				echo "--------------------"
 				echo "Finding neither, we will index with samtools."
-				samtools index ~{inputBamOrCram} ~{inputBamOrCram}.bai
+				samtools index "~{inputBamOrCram}" "~{inputBamOrCram}.bai"
 			fi
 
-			goleft covstats ~{inputBamOrCram} >> this.txt
+			goleft covstats "~{inputBamOrCram}" >> covstatsOut.txt
 
-			COVOUT=$(tail -n +2 this.txt)
+			COVOUT=$(tail -n +2 covstatsOut.txt)
 			read -a COVARRAY <<< "$COVOUT"
 			echo ${COVARRAY[0]} > thisCoverage
 			echo ${COVARRAY[11]} > thisReadLength
@@ -306,6 +306,7 @@ task covstats {
 	>>>
 
 	output {
+		File covstatsOut = "covstatsOut.txt"
 		Int outReadLength = read_int("thisReadLength")
 		Float outCoverage = read_float("thisCoverage")
 		String outFilenames = read_string("thisFilename")

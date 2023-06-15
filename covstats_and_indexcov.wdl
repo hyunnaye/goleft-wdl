@@ -29,7 +29,7 @@ workflow covstats_and_indexcov {
 
 	scatter(oneBamOrCram in inputBamsOrCrams) {
 
-        # Every instance of indexcov gets *all* indexes that the user passes in for the following reasons:
+        # Every instance of indexcov/covstats gets *all* indexes that the user passes in for the following reasons:
         # * Allows the user to input only some indexes
         # * Allow us to only have to compute indexes that are missing (computing indexes can be expensive + slow)
         # * We don't have to attempt to match bams/crams with their indexes using limited WDL built-ins, instead
