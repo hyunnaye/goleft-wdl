@@ -47,5 +47,6 @@ workflow Covstats {
         # if you only intend on inputing one cram/bam at a time into this workflow
         Array[Int] readLengths = scatteredCovstats.readLength
         Array[Float] coverages = scatteredCovstats.coverage
+        Array[Float] percentUnmapped = scatteredCovstats.percentUnmapped
 	}
 }
