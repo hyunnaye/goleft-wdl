@@ -1,9 +1,9 @@
 {
-    "covstats.bamsOrCrams": [
+    "Covstats.bamsOrCrams": [
       "../../Downloads/ERR7057565.bam"
    ],
-   "covstats.baisOrCrais": [
+    "Covstats.baisOrCrais": [
       "../../Downloads/ERR7057565.bam.bai"
    ],
-    "covstats.refGenome": "../../Downloads/tb_ref_tb_seq.fasta"
+    "Covstats.refGenome": "../../Downloads/tb_ref_tb_seq.fasta"
   }

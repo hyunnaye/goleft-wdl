@@ -77,9 +77,9 @@ workflow covstats_and_indexcov {
 
 	call goleft.report as report {
 		input:
-			readLengths = covstats.outReadLength,
-			coverages = covstats.outCoverage,
-			filenames = covstats.outFilenames
+			readLengths = covstats.readLength,
+			coverages = covstats.coverage,
+			filenames = covstats.filenames
 	}
 
 	output {

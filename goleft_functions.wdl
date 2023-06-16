@@ -253,11 +253,14 @@ task covstats {
 			# We have a cram, now check if reference genome exists
 			if [ "~{refGenome}" != '' ]; then
 
-				goleft covstats -f ~{refGenome} ~{inputBamOrCram} >> covstatsOut.txt
+				goleft covstats -f ~{refGenome} ~{inputBamOrCram} >> covstatsOutfile.txt
 
-				COVOUT=$(tail -n +2 covstatsOut.txt)
+				COVOUT=$(tail -n +2 covstatsOutfile.txt)
 				read -a COVARRAY <<< "$COVOUT"
 				echo ${COVARRAY[0]} > thisCoverage
+				echo ${COVARRAY[7]} > thisPercentUnmapped
+				echo ${COVARRAY[8]} > thisPercentBadReads
+				echo ${COVARRAY[9]} > thisPercentDuplicate
 				echo ${COVARRAY[11]} > thisReadLength
 				BASHFILENAME=$(basename ~{inputBamOrCram})
 				echo "'${BASHFILENAME}'" > thisFilename
@@ -290,14 +293,17 @@ task covstats {
 				samtools index "~{inputBamOrCram}" "~{inputBamOrCram}.bai"
 			fi
 
-			goleft covstats "~{inputBamOrCram}" >> covstatsOut.txt
+			goleft covstats "~{inputBamOrCram}" >> covstatsOutfile.txt
 
-			COVOUT=$(tail -n +2 covstatsOut.txt)
+			COVOUT=$(tail -n +2 covstatsOutfile.txt)
 			read -a COVARRAY <<< "$COVOUT"
-			echo ${COVARRAY[0]} > thisCoverage
-			echo ${COVARRAY[11]} > thisReadLength
+			echo ${COVARRAY[0]} > Coverage
+			echo ${COVARRAY[7]} > PercentUnmapped
+			echo ${COVARRAY[8]} > PercentBadReads
+			echo ${COVARRAY[9]} > PercentDuplicate
+			echo ${COVARRAY[11]} > ReadLength
 			BASHFILENAME=$(basename ~{inputBamOrCram})
-			echo "'${BASHFILENAME}'" > thisFilename
+			echo "'${BASHFILENAME}'" > Filename
 		fi
 
 		duration=$(( SECONDS - start ))
@@ -306,11 +312,15 @@ task covstats {
 	>>>
 
 	output {
-		File covstatsOut = "covstatsOut.txt"
-		Int outReadLength = read_int("thisReadLength")
-		Float outCoverage = read_float("thisCoverage")
-		String outFilenames = read_string("thisFilename")
-		Int duration = read_int("duration")
+		File covstatsOutfile = "covstatsOutfile.txt"
+		Float coverage = read_float("Coverage")
+		Float percentUnmapped = read_float("PercentUnmapped")
+		Float percentBadReads = read_float("PercentBadReads")
+		Float percentDuplicate = read_float("PercentDuplicate")
+		Int readLength = read_int("ReadLength")
+		String filenames = read_string("Filename")
+
+		Int timer = read_int("duration")
 	}
 	runtime {
 		docker: "quay.io/aofarrel/goleft-covstats:circleci-push"
@@ -337,7 +347,7 @@ task report {
 	command <<<
 	set -eux -o pipefail
 	python << CODE
-	f = open("reports.txt", "a")
+	f = open("reports.tsv", "a")
 	i = 0
 
 	# if there was just one input, these will not be arrays
@@ -347,7 +357,7 @@ task report {
 	
 	if (type(pyReadLengths) == int):
 		# only one input
-		f.write("Filename\tRead length\tCoverage\n")
+		f.write("Filename\tRead_length\tCoverage\n")
 		f.write("{}\t{}\t{}\n".format(pyFilenames, pyReadLengths, pyCoverages))
 		f.close()
 	else:
@@ -367,7 +377,7 @@ task report {
 	>>>
 
 	output {
-		File finalOut = "reports.txt"
+		File finalOut = "reports.tsv"
 	}
 
 	runtime {

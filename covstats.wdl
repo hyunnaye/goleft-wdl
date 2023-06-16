@@ -32,16 +32,20 @@ workflow Covstats {
     
     }
 
-            call goleft.report as report {
-            input:
-                readLengths = scatteredCovstats.outReadLength,
-                coverages = scatteredCovstats.outCoverage,
-                filenames = scatteredCovstats.outFilenames
-        }
+    # create a single report for all inputs
+    call goleft.report as report {
+        input:
+            readLengths = scatteredCovstats.readLength,
+            coverages = scatteredCovstats.coverage,
+            filenames = scatteredCovstats.filenames
+    }
 
 	output {
 		File covstatsReport = report.finalOut
-        Array[Int] readLengths = scatteredCovstats.outReadLength
-        Array[Float] coverages = scatteredCovstats.outCoverage
+
+        # these arrays are useful if being used to find an average across samples, or
+        # if you only intend on inputing one cram/bam at a time into this workflow
+        Array[Int] readLengths = scatteredCovstats.readLength
+        Array[Float] coverages = scatteredCovstats.coverage
 	}
 }
