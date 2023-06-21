@@ -27,7 +27,7 @@ task indexRefGenome {
 	}
 
 	runtime {
-		docker: "quay.io/aofarrel/goleft-covstats:0.0.2"
+		docker: "aofarrel/goleft-covstats:0.0.2"
 		preemptible: indexrefPreempt
 		disks: "local-disk " + finalDiskSize + " HDD"
 		memory: indexrefMem + "G"
@@ -110,7 +110,7 @@ task indexcovCRAM {
 	}
 	
 	runtime {
-		docker: "quay.io/aofarrel/goleft-covstats:0.0.2"
+		docker: "aofarrel/goleft-covstats:0.0.2"
 		preemptible: indexcovPrempt
 		disks: "local-disk " + finalDiskSize + " HDD"
 		memory: indexcovMemory + "G"
@@ -191,7 +191,7 @@ task indexcovBAM {
 	}
 	
 	runtime {
-		docker: "quay.io/aofarrel/goleft-covstats:0.0.2"
+		docker: "aofarrel/goleft-covstats:0.0.2"
 		preemptible: indexcovPrempt
 		disks: "local-disk " + finalDiskSize + " HDD"
 		memory: indexcovMemory + "G"
@@ -323,7 +323,7 @@ task covstats {
 		Int timer = read_int("duration")
 	}
 	runtime {
-		docker: "quay.io/aofarrel/goleft-covstats:0.0.2"
+		docker: "aofarrel/goleft-covstats:0.0.2"
 		preemptible: covstatsPreempt
 		disks: "local-disk " + finalDiskSize + " HDD"
 		memory: covstatsMem + "G"
