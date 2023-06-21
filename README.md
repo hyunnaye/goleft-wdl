@@ -21,7 +21,7 @@ If `inputBamsOrCrams` contains at least one BAM file:
 * To get accurate output from indexcov, your BAM files should be whole-genome, but this is not strictly necessary  
 
 ### Other inputs
-* `excludePattern` defaults to `"^chrEBV$|_random$|Un_|^HLA|_alt$|hap$"` instead of indexcov's usual default of `"^chrEBV$|^NC|_random$|Un_|^HLA\-|_alt$|hap\d$"` due to issues with how Terra/Cromwell handles special characters. The unmodified string passes womtool and miniwdl check, but if put in as a variable on Terra causes a token recognition error.
+* `excludePattern` defaults to `"^chrEBV$|_random$|Un_|^HLA|_alt$|hap$"` instead of indexcov's usual default of `"^chrEBV$|^NC|_random$|Un_|^HLA\-|_alt$|hap\d$"` due to issues with how Terra/Cromwell handles special characters. The unmodified string passes womtool and miniwdl check, but if put in as a variable on Terra causes a token recognition error.  
 * `forceIndexcov` is a boolean which indicates whether to run indexcov even if there is not an index file for every input (determined by comparing size of the arrays). **Please read the efficiency tips section before setting this.**
 
 Additionally, you can optionally set [runtime attributes](https://cromwell.readthedocs.io/en/stable/RuntimeAttributes/) for the tasks in this workflow. Due to how Cromwell works, they only actually do anything in the cloud. [See this document for a full list of runtime attributes](https://github.com/aofarrel/goleft-wdl/blob/main/README_runtime_attributes.md). 
