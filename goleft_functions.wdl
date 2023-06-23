@@ -257,13 +257,13 @@ task covstats {
 
 				COVOUT=$(tail -n +2 covstatsOutfile.txt)
 				read -a COVARRAY <<< "$COVOUT"
-				echo ${COVARRAY[0]} > thisCoverage
-				echo ${COVARRAY[7]} > thisPercentUnmapped
-				echo ${COVARRAY[8]} > thisPercentBadReads
-				echo ${COVARRAY[9]} > thisPercentDuplicate
-				echo ${COVARRAY[11]} > thisReadLength
+				echo "${COVARRAY[0]}" > Coverage
+				echo "${COVARRAY[7]}" > PercentUnmapped
+				echo "${COVARRAY[8]}" > PercentBadReads
+				echo "${COVARRAY[9]}" > PercentDuplicate
+				echo "${COVARRAY[11]}" > ReadLength
 				BASHFILENAME=$(basename ~{inputBamOrCram})
-				echo "'${BASHFILENAME}'" > thisFilename
+				echo "'${BASHFILENAME}'" > Filename
 			
 			# Cram file but no reference genome
 			else
@@ -297,11 +297,11 @@ task covstats {
 
 			COVOUT=$(tail -n +2 covstatsOutfile.txt)
 			read -a COVARRAY <<< "$COVOUT"
-			echo ${COVARRAY[0]} > Coverage
-			echo ${COVARRAY[7]} > PercentUnmapped
-			echo ${COVARRAY[8]} > PercentBadReads
-			echo ${COVARRAY[9]} > PercentDuplicate
-			echo ${COVARRAY[11]} > ReadLength
+			echo "${COVARRAY[0]}" > Coverage
+			echo "${COVARRAY[7]}" > PercentUnmapped
+			echo "${COVARRAY[8]}" > PercentBadReads
+			echo "${COVARRAY[9]}" > PercentDuplicate
+			echo "${COVARRAY[11]}" > ReadLength
 			BASHFILENAME=$(basename ~{inputBamOrCram})
 			echo "'${BASHFILENAME}'" > Filename
 		fi
