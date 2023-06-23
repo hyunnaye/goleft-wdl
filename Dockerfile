@@ -1,18 +1,18 @@
 # start with Google's official golang image
-FROM golang:1.15
+FROM golang:1.17
 
 # prevent apt-get dialogs
 ENV DEBIAN_FRONTEND noninteractive
 
 # install goleft from Brent's repo
 RUN go get -u github.com/brentp/goleft/...
-RUN go install github.com/brentp/goleft/cmd/goleft
+RUN go install github.com/brentp/goleft/cmd/goleft@latest
 
 # install samtools-required packages
 # these are necessary to work with crams
 RUN apt-get update
 RUN apt-get install bzip2
-RUN apt-get install zlib1g-dev
+RUN apt-get install zlib1g-dev -y
 RUN apt-get install libbz2-dev -y
 RUN apt-get install liblzma-dev -y
 

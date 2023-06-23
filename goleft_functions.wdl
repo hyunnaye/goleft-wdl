@@ -27,7 +27,7 @@ task indexRefGenome {
 	}
 
 	runtime {
-		docker: "quay.io/aofarrel/goleft-covstats:circleci-push"
+		docker: "ashedpotatoes/goleft-covstats:0.0.2"
 		preemptible: indexrefPreempt
 		disks: "local-disk " + finalDiskSize + " HDD"
 		memory: indexrefMem + "G"
@@ -42,6 +42,9 @@ task indexcovCRAM {
 		File inputCram
 		Array[File] allInputIndexes
 		File? refGenomeIndex
+
+		String sexChrNames = 'X, Y'
+		String excludePattern = "^chrEBV$|^NC|_random$|Un_|^HLA\\-|_alt$|hap\\d$"
 
 		# runtime attributes
 		Int indexcovMemory = 4
@@ -67,11 +70,11 @@ task indexcovCRAM {
 		FILE_BASE=$(echo ~{inputCram} | sed 's/\.[^.]*$//')
 		if [ "$FILE_EXT" = "cram" ] || [ "$FILE_EXT" = "CRAM" ]; then
 			# Check if an index file for the cram input exists
-			if [ -f ~{inputCram}.crai ]; then
+			if [ -f "~{inputCram}.crai" ]; then
 				echo "Crai file already exists with pattern *.cram.crai"
-			elif [ -f ${FILE_BASE}.crai ]; then
+			elif [ -f "${FILE_BASE}.crai" ]; then
 				echo "Crai file already exists with pattern *.crai"
-				mv ${FILE_BASE}.crai ${FILE_BASE}.cram.crai  # Rename with .cram.crai pattern
+				mv "${FILE_BASE}.crai" "${FILE_BASE}.cram.crai"  # Rename with .cram.crai pattern
 			else
 				echo "Input crai file not found. We searched for:"
 				echo "--------------------"
@@ -85,10 +88,10 @@ task indexcovCRAM {
 
 			INPUTCRAI=$(echo ~{inputCram}.crai)
 			mkdir ~{prefix}_indexDir
-			ln -s ~{inputCram} ~{prefix}_indexDir~{cramBasename}
-			ln -s ${INPUTCRAI} ~{prefix}_indexDir~{cramBasename}.crai
+			ln -s "~{inputCram}" "~{prefix}_indexDir~{cramBasename}"
+			ln -s "${INPUTCRAI}" "~{prefix}_indexDir~{cramBasename}.crai"
 			
-			goleft indexcov --extranormalize -d ~{prefix}_indexDir/ --fai ~{refGenomeIndex} ~{inputCram}.crai
+			goleft indexcov --sex '~{sexChrNames}' --excludepatt "~{excludePattern}" --extranormalize -d ~{prefix}_indexDir/ --fai ~{refGenomeIndex} ~{inputCram}.crai
 
 		elif [ -f ${FILE_BASE}.bam ]; then
 			>&2 echo "Somehow a bam file got into the cram function!"
@@ -107,7 +110,7 @@ task indexcovCRAM {
 	}
 	
 	runtime {
-		docker: "quay.io/aofarrel/goleft-covstats:circleci-push"
+		docker: "ashedpotatoes/goleft-covstats:0.0.2"
 		preemptible: indexcovPrempt
 		disks: "local-disk " + finalDiskSize + " HDD"
 		memory: indexcovMemory + "G"
@@ -120,6 +123,9 @@ task indexcovBAM {
 	input {
 		File inputBam
 		Array[File] allInputIndexes
+
+		String sexChrNames = 'X, Y'
+		String excludePattern = "^chrEBV$|^NC|_random$|Un_|^HLA\\-|_alt$|hap\\d$"
 
 		# runtime attributes
 		Int indexcovMemory = 4
@@ -146,7 +152,7 @@ task indexcovBAM {
 		FILE_EXT=$(echo ~{inputBam} | sed 's/.*\.//')
 		FILE_BASE=$(echo ~{inputBam} | sed 's/\.[^.]*$//')
 		if [ "$FILE_EXT" = "bam" ] || [ "$FILE_EXT" = "BAM" ]; then
-			if [ -f ~{inputBam}.bai ]; then
+			if [ -f "~{inputBam}.bai" ]; then
 				echo "Bai file already exists with pattern *.bam.bai"
 			elif [ -f ${FILE_BASE}.bai ]; then
 				echo "Bai file already exists with pattern *.bai"
@@ -166,7 +172,7 @@ task indexcovBAM {
 			mkdir ~{prefix}_indexDir
 			ln -s ~{inputBam} ~{prefix}_indexDir~{bamBasename}
 			ln -s ${INPUTBAI} ~{prefix}_indexDir~{bamBasename}.bai
-			goleft indexcov --directory ~{prefix}_indexDir/ *.bam
+			goleft indexcov --sex '~{sexChrNames}' --excludepatt "~{excludePattern}" --directory ~{prefix}_indexDir/ *.bam
 
 		elif [ -f ${FILE_BASE}.cram ]; then
 			>&2 echo "Cram file detected in the bam task!"
@@ -185,7 +191,7 @@ task indexcovBAM {
 	}
 	
 	runtime {
-		docker: "quay.io/aofarrel/goleft-covstats:circleci-push"
+		docker: "ashedpotatoes/goleft-covstats:0.0.2"
 		preemptible: indexcovPrempt
 		disks: "local-disk " + finalDiskSize + " HDD"
 		memory: indexcovMemory + "G"
@@ -241,20 +247,23 @@ task covstats {
 		# Detect if inputBamOrCram is a bam or a cram file
 		FILE_BASE=$(echo ~{inputBamOrCram} | sed 's/\.[^.]*$//')
 
-		if [ -f ${FILE_BASE}.cram ]; then
+		if [ -f "${FILE_BASE}.cram" ]; then
 			echo "Cram file detected"
 
 			# We have a cram, now check if reference genome exists
 			if [ "~{refGenome}" != '' ]; then
 
-				goleft covstats -f ~{refGenome} ~{inputBamOrCram} >> this.txt
+				goleft covstats -f ~{refGenome} ~{inputBamOrCram} >> covstatsOutfile.txt
 
-				COVOUT=$(tail -n +2 this.txt)
+				COVOUT=$(tail -n +2 covstatsOutfile.txt)
 				read -a COVARRAY <<< "$COVOUT"
-				echo ${COVARRAY[0]} > thisCoverage
-				echo ${COVARRAY[11]} > thisReadLength
+				echo "${COVARRAY[0]}" > Coverage
+				echo "${COVARRAY[7]}" > PercentUnmapped
+				echo "${COVARRAY[8]}" > PercentBadReads
+				echo "${COVARRAY[9]}" > PercentDuplicate
+				echo "${COVARRAY[11]}" > ReadLength
 				BASHFILENAME=$(basename ~{inputBamOrCram})
-				echo "'${BASHFILENAME}'" > thisFilename
+				echo "'${BASHFILENAME}'" > Filename
 			
 			# Cram file but no reference genome
 			else
@@ -267,31 +276,34 @@ task covstats {
 
 			# We now know it's a bam file and must search for an index file
 			# or make one ourselves with samtools
-			OTHERPOSSIBILITY=$(echo ~{inputBamOrCram} | sed 's/\.[^.]*$//')
+			inputBamOrCramNoExtension=$(echo ~{inputBamOrCram} | sed 's/\.[^.]*$//')
 
-			if [ -f ~{inputBamOrCram}.bai ]; then
+			if [ -f "~{inputBamOrCram}.bai" ]; then
 				echo "Bai file already exists with pattern *.bam.bai"
-			elif [ -f ${OTHERPOSSIBILITY}.bai ]; then
+			elif [ -f "${inputBamOrCramNoExtension}.bai" ]; then
 				echo "Bai file already exists with pattern *.bai"
 			else
-				echo "Input bai file not found. We searched for:"
+				echo "Bam index not found. We searched for:"
 				echo "--------------------"
 				echo "  ~{inputBamOrCram}.bai"
 				echo "--------------------"
-				echo "  ${OTHERPOSSIBILITY}.bai"
+				echo "  ${inputBamOrCramNoExtension}.bai"
 				echo "--------------------"
 				echo "Finding neither, we will index with samtools."
-				samtools index ~{inputBamOrCram} ~{inputBamOrCram}.bai
+				samtools index "~{inputBamOrCram}" "~{inputBamOrCram}.bai"
 			fi
 
-			goleft covstats ~{inputBamOrCram} >> this.txt
+			goleft covstats "~{inputBamOrCram}" >> covstatsOutfile.txt
 
-			COVOUT=$(tail -n +2 this.txt)
+			COVOUT=$(tail -n +2 covstatsOutfile.txt)
 			read -a COVARRAY <<< "$COVOUT"
-			echo ${COVARRAY[0]} > thisCoverage
-			echo ${COVARRAY[11]} > thisReadLength
+			echo "${COVARRAY[0]}" > Coverage
+			echo "${COVARRAY[7]}" > PercentUnmapped
+			echo "${COVARRAY[8]}" > PercentBadReads
+			echo "${COVARRAY[9]}" > PercentDuplicate
+			echo "${COVARRAY[11]}" > ReadLength
 			BASHFILENAME=$(basename ~{inputBamOrCram})
-			echo "'${BASHFILENAME}'" > thisFilename
+			echo "'${BASHFILENAME}'" > Filename
 		fi
 
 		duration=$(( SECONDS - start ))
@@ -300,13 +312,18 @@ task covstats {
 	>>>
 
 	output {
-		Int outReadLength = read_int("thisReadLength")
-		Float outCoverage = read_float("thisCoverage")
-		String outFilenames = read_string("thisFilename")
-		Int duration = read_int("duration")
+		File covstatsOutfile = "covstatsOutfile.txt"
+		Float coverage = read_float("Coverage")
+		Float percentUnmapped = read_float("PercentUnmapped")
+		Float percentBadReads = read_float("PercentBadReads")
+		Float percentDuplicate = read_float("PercentDuplicate")
+		Int readLength = read_int("ReadLength")
+		String filenames = read_string("Filename")
+
+		Int timer = read_int("duration")
 	}
 	runtime {
-		docker: "quay.io/aofarrel/goleft-covstats:circleci-push"
+		docker: "ashedpotatoes/goleft-covstats:0.0.2"
 		preemptible: covstatsPreempt
 		disks: "local-disk " + finalDiskSize + " HDD"
 		memory: covstatsMem + "G"
@@ -330,7 +347,7 @@ task report {
 	command <<<
 	set -eux -o pipefail
 	python << CODE
-	f = open("reports.txt", "a")
+	f = open("reports.tsv", "a")
 	i = 0
 
 	# if there was just one input, these will not be arrays
@@ -340,7 +357,7 @@ task report {
 	
 	if (type(pyReadLengths) == int):
 		# only one input
-		f.write("Filename\tRead length\tCoverage\n")
+		f.write("Filename\tRead_length\tCoverage\n")
 		f.write("{}\t{}\t{}\n".format(pyFilenames, pyReadLengths, pyCoverages))
 		f.close()
 	else:
@@ -360,7 +377,7 @@ task report {
 	>>>
 
 	output {
-		File finalOut = "reports.txt"
+		File finalOut = "reports.tsv"
 	}
 
 	runtime {
@@ -370,79 +387,3 @@ task report {
 		memory: reportMemSize + "G"
 	}
 }
-
-workflow goleft_functions {
-	input {
-		Boolean forceIndexcov = true
-		Array[File] inputBamsOrCrams
-		Array[File]? inputIndexes
-		File? refGenome
-		File? refGenomeIndex # currently unused
-	}
-
-	Array[String] emptyArray = []
-
-	if(defined(refGenome)) {
-		call indexRefGenome { input: refGenome = refGenome }
-	}
-
-	scatter(oneBamOrCram in inputBamsOrCrams) {
-
-		Array[String] allOrNoIndexes = select_first([inputIndexes, emptyArray])
-
-		if (forceIndexcov || length(allOrNoIndexes) == length(inputBamsOrCrams)) {
-
-			String thisFilename = "${basename(oneBamOrCram)}"
-			String longerIfACram = sub(thisFilename, "\\.cram", "foobarbizbuzz")
-			
-			if (thisFilename == longerIfACram) {
-				# This rings true in the following situations:
-				# * This is a bam, and forceIndexCov is true
-				# * This is a bam, and we have one index file per input bam/cram input
-				# We are hoping that the second case means that the bam has an index file
-				# and we won't have to index it ourselves, but this isn't certain
-				call indexcovBAM {
-					input:
-						inputBam = oneBamOrCram,
-						allInputIndexes = allOrNoIndexes
-				}
-			}
-
-			if (thisFilename != longerIfACram) {
-				call indexcovCRAM {
-					input:
-						inputCram = oneBamOrCram,
-						allInputIndexes = allOrNoIndexes,
-						refGenomeIndex = indexRefGenome.refIndex
-				}
-			}
-		}
-
-		call covstats as scatteredGetStats {
-			input:
-				inputBamOrCram = oneBamOrCram,
-				refGenome = refGenome,
-				allInputIndexes = allOrNoIndexes
-		}
-	}
-
-	call report {
-		input:
-			readLengths = scatteredGetStats.outReadLength,
-			coverages = scatteredGetStats.outCoverage,
-			filenames = scatteredGetStats.outFilenames
-	}
-
-	output {
-		File covstats_report = report.finalOut
-		Array[Array[File]?] indexcov_of_bams = indexcovBAM.indexout
-		Array[Array[File]?] indexcov_of_crams = indexcovCRAM.indexout
-	}
-
-	meta {
-		author: "Ash O'Farrell"
-		email: "aofarrel@ucsc.edu"
-		description: "Runs the goleft functions covstats and indexcov, then parses covstats output to extract read length and coverage. If running on Terra download indexDir to read indexcov's HTML output. See README.md on Github for details."
-    }
-}
-

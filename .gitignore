@@ -3,3 +3,5 @@ cromwell-input/*
 .DS_Store
 Cromwell.stderr.txt
 Cromwell.stdout.txt
+_LAST
+2023*/

@@ -1,0 +1,11 @@
+{
+  "covstats_and_indexcov.inputBamsOrCrams": [
+    "../../Downloads/ERR7057565.bam"
+ ],
+ "covstats_and_indexcov.inputIndexes": [
+    "../../Downloads/ERR7057565.bam.bai"
+ ],
+  "covstats_and_indexcov.refGenome": "../../Downloads/tb_ref_tb_seq.fasta",
+  "covstats_and_indexcov.indexcovBAM.sexChrNames": "",
+  "covstats_and_indexcov.indexcovBAM.excludePattern": ""
+}
