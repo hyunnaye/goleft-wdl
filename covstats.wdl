@@ -5,9 +5,15 @@ import "https://raw.githubusercontent.com/aofarrel/goleft-wdl/0.1.0/goleft_funct
 workflow Covstats {
 
     input {
-        File refGenome
         Array[File] bamsOrCrams
         Array[File]? baisOrCrais
+        File? refGenome
+    }
+    
+    parameter_meta {
+        refGenome: "Reference genome. Required only if at least one of the inputs is a cram."
+        bamsOrCrams: "Input bams or crams. Can be a mixture of bams and crams, or just one."
+        baisOrCrais: "Input bam or cram indexes. Should be named similarly to their associated inputs in bamsOrCrams, eg foo.bam and foo.bai."
     }
 
     Array[String] emptyArray = ['']
