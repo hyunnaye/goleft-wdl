@@ -38,6 +38,8 @@ task indexcovCRAM {
 	# This task is only called if the user either input a ref genome index or
 	# we created one earlier in the indexRefGenome task, so again, we have
 	# an "optional" file here that is always going to be defined.
+	# Caveat: WDL interpreters do not handle escaped characters consistently, so
+	# you might need to do some trial and error with excludePattern.
 	input {
 		File inputCram
 		Array[File] allInputIndexes
@@ -86,14 +88,13 @@ task indexcovCRAM {
 				samtools index ~{inputCram} ~{inputCram}.crai
 			fi
 
-			INPUTCRAI=$(echo ~{inputCram}.crai)
 			mkdir ~{prefix}_indexDir
 			ln -s "~{inputCram}" "~{prefix}_indexDir~{cramBasename}"
-			ln -s "${INPUTCRAI}" "~{prefix}_indexDir~{cramBasename}.crai"
+			ln -s "~{inputCram}.crai" "~{prefix}_indexDir~{cramBasename}.crai"
 			
 			goleft indexcov --sex '~{sexChrNames}' --excludepatt "~{excludePattern}" --extranormalize -d ~{prefix}_indexDir/ --fai ~{refGenomeIndex} ~{inputCram}.crai
 
-		elif [ -f ${FILE_BASE}.bam ]; then
+		elif [ -f "${FILE_BASE}.bam" ]; then
 			>&2 echo "Somehow a bam file got into the cram function!"
 			>&2 echo "This shouldn't happen, please report to the dev."
 			exit 1
@@ -120,6 +121,8 @@ task indexcovCRAM {
 task indexcovBAM {
 	# Indexcov, when run on bams, doesn't need a refGenome index, but it does need
 	# each and every bam to have an index file.
+	# Caveat: WDL interpreters do not handle escaped characters consistently, so
+	# you might need to do some trial and error with excludePattern.
 	input {
 		File inputBam
 		Array[File] allInputIndexes
@@ -154,9 +157,9 @@ task indexcovBAM {
 		if [ "$FILE_EXT" = "bam" ] || [ "$FILE_EXT" = "BAM" ]; then
 			if [ -f "~{inputBam}.bai" ]; then
 				echo "Bai file already exists with pattern *.bam.bai"
-			elif [ -f ${FILE_BASE}.bai ]; then
+			elif [ -f "${FILE_BASE}.bai" ]; then
 				echo "Bai file already exists with pattern *.bai"
-				mv ${FILE_BASE}.bai ${FILE_BASE}.bam.bai
+				mv "${FILE_BASE}.bai" "${FILE_BASE}.bam.bai"
 			else
 				echo "Input bai file not found. We searched for:"
 				echo "--------------------"
@@ -167,14 +170,13 @@ task indexcovBAM {
 				echo "Finding neither, we will index with samtools."
 				samtools index ~{inputBam} ~{inputBam}.bai
 			fi
-
-			INPUTBAI=$(echo ~{inputBam}.bai)
+			
 			mkdir ~{prefix}_indexDir
 			ln -s ~{inputBam} ~{prefix}_indexDir~{bamBasename}
-			ln -s ${INPUTBAI} ~{prefix}_indexDir~{bamBasename}.bai
-			goleft indexcov --sex '~{sexChrNames}' --excludepatt "~{excludePattern}" --directory ~{prefix}_indexDir/ *.bam
+			ln -s ~{inputBam}.bai ~{prefix}_indexDir~{bamBasename}.bai
+			goleft indexcov --sex '~{sexChrNames}' --excludepatt "~{excludePattern}" --directory "~{prefix}_indexDir/" ./*.bam
 
-		elif [ -f ${FILE_BASE}.cram ]; then
+		elif [ -f "${FILE_BASE}.cram" ]; then
 			>&2 echo "Cram file detected in the bam task!"
 			>&2 echo "This shouldn't happen, please report to the dev."
 			exit 1
@@ -235,6 +237,8 @@ task covstats {
 	# If input is a cram, it will get samtools'ed into a bam, so we need to 
 	# account for that. Thankfully a cram should always be smaller than a bam.
 	Int finalDiskSize = refSize + indexSize + (2*thisAmSize) + covstatsAddlDisk
+	
+	String basename_input = basename(inputBamOrCram)
 
 	command <<<
 
@@ -253,9 +257,11 @@ task covstats {
 			# We have a cram, now check if reference genome exists
 			if [ "~{refGenome}" != '' ]; then
 
-				goleft covstats -f ~{refGenome} ~{inputBamOrCram} >> covstatsOutfile.txt
+				goleft covstats -f ~{refGenome} ~{inputBamOrCram} >> "~{basename_input}".covstats.txt
 
-				COVOUT=$(tail -n +2 covstatsOutfile.txt)
+				COVOUT=$(tail -n +2 "~{basename_input}".covstats.txt)
+				
+				# shellcheck disable=SC2162 # we want tabs to be interpreted as such
 				read -a COVARRAY <<< "$COVOUT"
 				echo "${COVARRAY[0]}" > Coverage
 				echo "${COVARRAY[7]}" > PercentUnmapped
@@ -293,9 +299,11 @@ task covstats {
 				samtools index "~{inputBamOrCram}" "~{inputBamOrCram}.bai"
 			fi
 
-			goleft covstats "~{inputBamOrCram}" >> covstatsOutfile.txt
+			goleft covstats "~{inputBamOrCram}" >> "~{basename_input}".covstats.txt
 
-			COVOUT=$(tail -n +2 covstatsOutfile.txt)
+			COVOUT=$(tail -n +2 "~{basename_input}".covstats.txt)
+			
+			# shellcheck disable=SC2162 # we want tabs to be interpreted as such
 			read -a COVARRAY <<< "$COVOUT"
 			echo "${COVARRAY[0]}" > Coverage
 			echo "${COVARRAY[7]}" > PercentUnmapped
@@ -312,7 +320,7 @@ task covstats {
 	>>>
 
 	output {
-		File covstatsOutfile = "covstatsOutfile.txt"
+		File covstatsOutfile = "~{basename_input}.covstats.txt"
 		Float coverage = read_float("Coverage")
 		Float percentUnmapped = read_float("PercentUnmapped")
 		Float percentBadReads = read_float("PercentBadReads")
