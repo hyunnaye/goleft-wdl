@@ -230,7 +230,7 @@ task covstats {
 		Int covstatsAddlDisk = 2
 	}
 	# Estimate disk size required
-	Int refSize = ceil(size(refGenome, "GB"))
+	Int refSize = ceil(size(select_first([refGenome, inputBamOrCram]), "GB"))
 	Int indexSize = ceil(size(allInputIndexes, "GB"))
 	Int thisAmSize = ceil(size(inputBamOrCram, "GB"))
 
