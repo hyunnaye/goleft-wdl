@@ -1,6 +1,6 @@
 version 1.0
 
-import "https://raw.githubusercontent.com/aofarrel/goleft-wdl/small-improvements/covstats_and_indexcov.wdl" as goleft
+import "https://raw.githubusercontent.com/aofarrel/goleft-wdl/main/covstats_and_indexcov.wdl" as goleft
 import "https://raw.githubusercontent.com/aofarrel/checker-WDL-templates/v0.9.3/tasks/filecheck_task.wdl" as checker_file
 import "https://raw.githubusercontent.com/aofarrel/checker-WDL-templates/v0.9.3/tasks/arraycheck_task.wdl" as checker_array
 
