@@ -6,7 +6,7 @@ workflows:
          - /covstats_and_indexcov.json
      name: covstats_and_indexcov
    - subclass: WDL
-     primaryDescriptorPath: /covstats.wdl
+     primaryDescriptorPath: covstats.wdl
      name: covstats
    - subclass: WDL
      primaryDescriptorPath: /indexcov.wdl
