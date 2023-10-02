@@ -12,4 +12,4 @@ workflows:
      primaryDescriptorPath: /indexcov.wdl
      name: indexcov
      authors:
-         - name: Kathy
+         - name:  Nayeon
