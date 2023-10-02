@@ -11,3 +11,5 @@ workflows:
    - subclass: WDL
      primaryDescriptorPath: /indexcov.wdl
      name: indexcov
+     authors:
+         - name: Kathy
